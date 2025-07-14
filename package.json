@@ -1,0 +1,35 @@
+{
+  "name": "postfix-prefix",
+  "version": "0.1.0",
+  "description": "Web UI for managing a postfix email relay",
+  "keywords": [
+    "email",
+    "postfix",
+    "relay"
+  ],
+  "homepage": "https://github.com/CorySanin/postfix-prefix#readme",
+  "bugs": {
+    "url": "https://github.com/CorySanin/postfix-prefix/issues"
+  },
+  "scripts": {
+    "build": "npx build-shit && tsc -p tsconfig.plugin.json && tsc",
+    "watch": "npx build-shit --watch"
+  },
+  "dependencies": {
+    "express": "5.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "5.0.3",
+    "@types/node": "^24.0.13",
+    "typescript": "5.8.3",
+    "forking-build-shit": "1.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CorySanin/postfix-prefix.git"
+  },
+  "license": "MIT",
+  "author": "Cory Sanin",
+  "type": "module",
+  "main": "src/index.ts"
+}
