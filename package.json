@@ -12,7 +12,7 @@
     "url": "https://github.com/CorySanin/postfix-prefix/issues"
   },
   "scripts": {
-    "build": "npx build-shit && tsc -p tsconfig.plugin.json && tsc",
+    "build": "npx build-shit && tsc",
     "watch": "npx build-shit --watch"
   },
   "dependencies": {
