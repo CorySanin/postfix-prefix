@@ -13,10 +13,16 @@
   },
   "scripts": {
     "build": "npx build-shit && tsc",
-    "watch": "npx build-shit --watch"
+    "watch": "npx build-shit --watch",
+    "start": "node --experimental-strip-types src/index.ts"
   },
   "dependencies": {
-    "express": "5.1.0"
+    "express": "5.1.0",
+    "ejs": "3.1.10",
+    "json5": "2.2.3",
+    "mysql2": "3.14.2",
+    "pg": "8.16.3",
+    "sequelize": "6.37.7"
   },
   "devDependencies": {
     "@types/express": "5.0.3",

@@ -26,7 +26,8 @@ WORKDIR /usr/src/postfix-prefix
 
 COPY --from=build /usr/src/postfix-prefix /usr/src/postfix-prefix
 
-RUN apk add --no-cache curl postfix
+RUN apk add --no-cache curl postfix && \
+ touch etc/postfix/virtual
 
 USER node
 

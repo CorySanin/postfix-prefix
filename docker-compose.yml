@@ -1,0 +1,29 @@
+version: '2'
+
+services:
+    postfix-prefix:
+        container_name: postfix-prefix
+        build:
+            context: ./
+            dockerfile: Dockerfile
+        environment:
+            DBURI: 'mysql://postpre:${DB_PASSWORD}@mariadb:3306/postpre'
+        restart: "no"
+        ports:
+            - 8080:8080
+        depends_on:
+            - mariadb
+    
+    mariadb:
+        container_name: postfix-prefix-mariadb
+        image: mariadb:lts-noble
+        environment:
+            MARIADB_RANDOM_ROOT_PASSWORD: 1
+            MARIADB_USER: postpre
+            MARIADB_PASSWORD: ${DB_PASSWORD}
+            MARIADB_DATABASE: postpre
+        volumes:
+            - ./config/mariadb:/var/lib/mysql
+        restart: "no"
+        # ports:
+        #     - 3306:3306
