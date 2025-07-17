@@ -20,13 +20,13 @@ class STDIO {
     async writeVirtualConfig(): Promise<void> {
         const outputStream = fs.createWriteStream(this.virtualPath, { flags: 'w' });
         let lastId = 0;
-        let relays = await this.db.getRelays(lastId);
+        let relays = await this.db.getRelays(false, lastId) || [];
         while (relays.length) {
             relays.forEach(r => {
                 outputStream.write(`${r.alias}   ${r.destination}`);
                 lastId = r.id;
             });
-            relays = await this.db.getRelays(lastId);
+            relays = await this.db.getRelays(false, lastId);
         }
         outputStream.end(() => {
             console.info('Finished writing virtual file');

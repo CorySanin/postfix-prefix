@@ -1,4 +1,5 @@
 import { Model, Sequelize, DataTypes, Op } from 'sequelize';
+import type { WhereOptions } from 'sequelize';
 
 const RELAY_TABLE = 'relays';
 const USER_TABLE = 'users'
@@ -10,6 +11,7 @@ type AdapterOptions = {
 class UserRecord extends Model {
     id: number;
     oidc: string;
+    displayname: string;
     admin: boolean;
 }
 
@@ -18,6 +20,7 @@ class RelayRecord extends Model {
     user: number;
     description: string;
     enabled: boolean;
+    softDeleted: boolean;
     alias: string;
     destination: string;
     whitelist: string[];
@@ -37,6 +40,7 @@ class DbAdapter {
         this.userModel = sequelize.define(USER_TABLE, {
             id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
             oidc: { type: DataTypes.STRING(128), allowNull: false, unique: true },
+            displayname: { type: DataTypes.STRING(128), allowNull: false, unique: false },
             admin: { type: DataTypes.BOOLEAN, defaultValue: false }
         });
         this.relayModel = sequelize.define(RELAY_TABLE, {
@@ -47,8 +51,9 @@ class DbAdapter {
                     key: 'id'
                 }
             },
-            description: { type: DataTypes.TEXT, defaultValue: ''},
+            description: { type: DataTypes.TEXT, defaultValue: '' },
             enabled: { type: DataTypes.BOOLEAN, defaultValue: true },
+            softDeleted: { type: DataTypes.BOOLEAN, defaultValue: false },
             alias: { type: DataTypes.STRING(128), allowNull: false, unique: true },
             destination: { type: DataTypes.STRING(128), allowNull: false, unique: false },
             whitelist: {
@@ -75,16 +80,30 @@ class DbAdapter {
         return this.userModel.findByPk(id);
     }
 
-    async getUserByOIDC(id: string): Promise<UserRecord> {
+    async getUserByOIDC(id: string, displayname: string): Promise<UserRecord> {
         const [user, created] = await this.userModel.findOrCreate({
             where: {
                 oidc: id
-            }
+            },
+            defaults: {
+                displayname
+            },
         });
-        if (created && user.id === 1) {
+        if (!created && user.displayname !== displayname) {
+            await this.setDisplayName(user.id, user.displayname = displayname);
+        }
+        else if (created && user.id === 1) {
             await this.setAdmin(user.id, user.admin = true);
         }
         return user;
+    }
+
+    setDisplayName(id: number, displayname: string): Promise<[number]> {
+        return this.userModel.update({
+            displayname
+        }, {
+            where: { id }
+        });
     }
 
     setAdmin(id: number, isAdmin: boolean): Promise<[number]> {
@@ -95,17 +114,27 @@ class DbAdapter {
         });
     }
 
-    getAllRelays(): Promise<RelayRecord[]> {
-        return this.relayModel.findAll();
+    getAllRelays(showDisabled: boolean = false): Promise<RelayRecord[]> {
+        return this.relayModel.findAll(showDisabled ? {} : {
+            where: {
+                enabled: true,
+                softDeleted: false
+            }
+        });
     }
 
-    getRelays(startingId: number = 0, limit: number = 100): Promise<RelayRecord[]> {
+    getRelays(showDisabled: boolean = false, startingId: number = 0, limit: number = 100): Promise<RelayRecord[]> {
+        const whereclause: WhereOptions<RelayRecord> = {
+            id: {
+                [Op.gt]: startingId
+            }
+        }
+        if (!showDisabled) {
+            whereclause.enabled = true;
+            whereclause.softDeleted = false;
+        }
         return this.relayModel.findAll({
-            where: {
-                id: {
-                    [Op.gt]: startingId
-                }
-            },
+            where: whereclause,
             limit
         });
     }
@@ -114,7 +143,8 @@ class DbAdapter {
         const id = typeof user === 'number' ? user : user.id;
         return this.relayModel.findAll({
             where: {
-                user: id
+                user: id,
+                softDeleted: false
             }
         });
     }
