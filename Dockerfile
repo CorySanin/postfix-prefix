@@ -27,7 +27,10 @@ WORKDIR /usr/src/postfix-prefix
 COPY --from=build /usr/src/postfix-prefix /usr/src/postfix-prefix
 
 RUN apk add --no-cache curl postfix && \
- touch etc/postfix/virtual
+ mkdir -p etc/postfix && \
+ ln -sf /usr/src/postfix-prefix/etc/postfix/main.cf /etc/postfix/ && \
+ ln -sf /usr/src/postfix-prefix/etc/postfix/mysql_virtual_domains.cf /etc/postfix/ && \
+ ln -sf /usr/src/postfix-prefix/etc/postfix/mysql_virtual_alias_maps.cf /etc/postfix/
 
 USER node
 

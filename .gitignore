@@ -103,5 +103,6 @@ assets/css/
 assets/js/
 assets/images/webp/
 config/mariadb/
+etc/
 .env
 *:Zone.Identifier

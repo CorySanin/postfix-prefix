@@ -1,12 +1,10 @@
 import { Model, Sequelize, DataTypes, Op } from 'sequelize';
 import type { WhereOptions } from 'sequelize';
+import type { AdapterOptions } from './config.ts';
 
 const RELAY_TABLE = 'relays';
 const USER_TABLE = 'users'
-
-type AdapterOptions = {
-    uri: string;
-}
+const DOMAIN_TABLE = 'domains'
 
 class UserRecord extends Model {
     id: number;
@@ -26,9 +24,15 @@ class RelayRecord extends Model {
     whitelist: string[];
 }
 
+class DomainRecord extends Model {
+    name: string;
+    owner: number;
+}
+
 class DbAdapter {
     private userModel: typeof UserRecord;
     private relayModel: typeof RelayRecord;
+    private domainModel: typeof DomainRecord;
     private sequelize: Sequelize;
 
     constructor(options: Partial<AdapterOptions> = {}) {
@@ -61,6 +65,15 @@ class DbAdapter {
                     return JSON.parse(this.getDataValue('whitelist') as string);
                 }, set: function (this: RelayRecord, val: string[]) {
                     this.setDataValue('whitelist', JSON.stringify(val));
+                }
+            }
+        });
+        this.domainModel = sequelize.define(DOMAIN_TABLE, {
+            name: { type: DataTypes.STRING(128), primaryKey: true},
+            owner: {
+                type: DataTypes.INTEGER, references: {
+                    model: this.userModel,
+                    key: 'id'
                 }
             }
         });
@@ -172,6 +185,40 @@ class DbAdapter {
         return this.relayModel.create(relay);
     }
 
+    getMyDomains(user: number | UserRecord) : Promise<DomainRecord[]> {
+        const owner = typeof user === 'number' ? user : user.id;
+        return this.domainModel.findAll({
+            where: {
+                [Op.or]: [
+                    {
+                        owner: -1
+                    },
+                    {
+                        owner
+                    }
+                ]
+            }
+        });
+    }
+
+    createDomain(domain: string, user: number | UserRecord = -1) {
+        const owner = typeof user === 'number' ? user : user.id;
+        return this.domainModel.create({
+            name: domain,
+            owner
+        });
+    }
+
+    deleteDomain(domain: string, user: number | UserRecord) {
+        const owner = typeof user === 'number' ? user : user.id;
+        return this.domainModel.destroy({
+            where: {
+                name: domain,
+                owner
+            }
+        });
+    }
+
     close(): Promise<void> {
         return this.sequelize.close();
     }
@@ -179,4 +226,4 @@ class DbAdapter {
 
 export default DbAdapter;
 export { DbAdapter };
-export type { AdapterOptions, UserRecord, RelayRecord };
+export type { UserRecord, RelayRecord };
