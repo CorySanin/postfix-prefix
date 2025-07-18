@@ -83,6 +83,7 @@ class DbAdapter {
     async syncModels(): Promise<void> {
         await this.userModel.sync();
         await this.relayModel.sync();
+        await this.domainModel.sync();
     }
 
     getAllUsers(): Promise<UserRecord[]> {
